@@ -14,44 +14,70 @@ MAX_FEE = 100000000000
 
 
 async def deploy(contract_name, raw_calldata, net_type):
-    client = None
-    if net_type == "testnet":
-        client = GatewayClient(net=testnet)
-    if net_type == "localnet":
-        client = GatewayClient("http://127.0.0.1:5050")
-    deployer_account = Account(
-            client=client,
-            address="0x6fd7354452299b66076d0a7e88a1635cb08506f738434e95ef5cf4ee5af2e0c",
-            key_pair=KeyPair(private_key=0x5a04c74b6efdaabfc41975de2498a89ae5418ef5772ff6404b5be1741d58577,
-                             public_key=0x5ae1a840919c6268f6925c6753e42796c3afe44221126ef999124906990ce15),
-            chain=StarknetChainId.TESTNET,
-    )
+    try:
+        print(contract_name)
+        client = None
+        if net_type == "testnet":
+            client = GatewayClient(net=testnet)
+        if net_type == "localnet":
+            client = GatewayClient("http://127.0.0.1:5050")
+        deployer_account = Account(
+                client=client,
+                address="0x6fd7354452299b66076d0a7e88a1635cb08506f738434e95ef5cf4ee5af2e0c",
+                key_pair=KeyPair(private_key=0x5a04c74b6efdaabfc41975de2498a89ae5418ef5772ff6404b5be1741d58577,
+                                 public_key=0x5ae1a840919c6268f6925c6753e42796c3afe44221126ef999124906990ce15),
+                chain=StarknetChainId.TESTNET,
+        )
 
-    casm_class = CasmClassSchema().loads(Path(f"../../target/dev/aa_auto_transactions_{contract_name}.compiled_contract_class.json").read_text())
-    casm_class_hash = compute_casm_class_hash(casm_class)
-    declare_transaction = await deployer_account.sign_declare_v2_transaction(
-            compiled_contract=Path(f"../../target/dev/aa_auto_transactions_{contract_name}.contract_class.json").read_text(),
-            compiled_class_hash=casm_class_hash, max_fee=int(1e14))
-    print(f"declare_transaction: {hex(declare_transaction.calculate_hash(chain_id=StarknetChainId.TESTNET))}")
-    resp = await deployer_account.client.declare(transaction=declare_transaction)
-    await deployer_account.client.wait_for_tx(resp.transaction_hash)
-    class_hash = resp.class_hash
-    print(f"Declared class hash: {class_hash}, {hex(class_hash)}")
-    udc_deployer = Deployer()
-    contract_deployment = udc_deployer.create_contract_deployment_raw(class_hash=class_hash,
-                                                                      raw_calldata=raw_calldata)
-    deploy_invoke_transaction = await deployer_account.sign_invoke_transaction(calls=contract_deployment.call, max_fee=int(1e14))
-    print(f"deploy_invoke_transaction: {hex(deploy_invoke_transaction.calculate_hash(chain_id=StarknetChainId.TESTNET))}")
-    resp = await deployer_account.client.send_transaction(deploy_invoke_transaction)
-    await deployer_account.client.wait_for_tx(resp.transaction_hash)
-    address = contract_deployment.address
-    print(f"Contract address: {hex(address)}")
+        casm_class = CasmClassSchema().loads(Path(f"../../target/dev/aa_auto_transactions_{contract_name}.compiled_contract_class.json").read_text())
+        casm_class_hash = compute_casm_class_hash(casm_class)
+        declare_transaction = await deployer_account.sign_declare_v2_transaction(
+                compiled_contract=Path(f"../../target/dev/aa_auto_transactions_{contract_name}.contract_class.json").read_text(),
+                compiled_class_hash=casm_class_hash, max_fee=int(1e14))
+        print(f"declare_transaction: {hex(declare_transaction.calculate_hash(chain_id=StarknetChainId.TESTNET))}")
+        resp = await deployer_account.client.declare(transaction=declare_transaction)
+        await deployer_account.client.wait_for_tx(resp.transaction_hash)
+        class_hash = resp.class_hash
+        print(f"Declared class hash: {class_hash}, {hex(class_hash)}")
+        udc_deployer = Deployer()
+        contract_deployment = udc_deployer.create_contract_deployment_raw(class_hash=class_hash,
+                                                                          raw_calldata=raw_calldata)
+        deploy_invoke_transaction = await deployer_account.sign_invoke_transaction(calls=contract_deployment.call, max_fee=int(1e14))
+        print(f"deploy_invoke_transaction: {hex(deploy_invoke_transaction.calculate_hash(chain_id=StarknetChainId.TESTNET))}")
+        resp = await deployer_account.client.send_transaction(deploy_invoke_transaction)
+        await deployer_account.client.wait_for_tx(resp.transaction_hash)
+        address = contract_deployment.address
+        print(f"Contract address: {hex(address)}")
+        file_path = f"./{contract_name}"
+        with open(file_path, 'w') as file:
+            file.write(hex(address))
+        return int(hex(address), 16)
+    except Exception as e:
+        print(f"{e}")
+        file_path = f"{contract_name}"
+        with open(file_path, 'r') as file:
+            s = file.read()
+            print(s)
+            return int(s, 16)
+
 
 
 async def main():
     contract_name = "Account"
     # 0x166db0a0758b72c6c89bf5ac6942aeaa0ee281eaae34f06bee74ce29ae4cd36
-    raw_calldata = [0x5d048d8612d0f6d8c02a1a3f8d93fb7f9dc8e020edb58d32bc3c5aaa81712ec]
+    raw_calldata = [0x30e73be48fdd88083aa49beae396784073adab7d7c76a9fe566c7355c5b0572]
+    net_type = "testnet"
+    res = await deploy(contract_name, raw_calldata, net_type)
+
+    contract_name = "SimpleSubsribeServiceContract"
+    # 0x166db0a0758b72c6c89bf5ac6942aeaa0ee281eaae34f06bee74ce29ae4cd36
+    raw_calldata = [res]
+    net_type = "testnet"
+    await deploy(contract_name, raw_calldata, net_type)
+
+    contract_name = "SimpleSubsribeServiceContract02"
+    # 0x166db0a0758b72c6c89bf5ac6942aeaa0ee281eaae34f06bee74ce29ae4cd36
+    raw_calldata = []
     net_type = "testnet"
     await deploy(contract_name, raw_calldata, net_type)
 

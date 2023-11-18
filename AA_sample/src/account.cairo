@@ -23,9 +23,19 @@ mod Account {
     use starknet::get_contract_address;
     use starknet::get_tx_info;
 
+    use aa_auto_transactions::SubscriptionModel::user_subscrible_component;
+
     const TRANSACTION_VERSION: felt252 = 1;
     // 2**128 + TRANSACTION_VERSION
     const QUERY_VERSION: felt252 = 0x100000000000000000000000000000001;
+
+    // auto_paiments
+    component!(path: user_subscrible_component, storage: ap_s, event: ap_e);
+
+    #[abi(embed_v0)]
+    impl UserSubscriptbleImpl =
+        user_subscrible_component::UserSubscriptble<ContractState>;
+    impl UserSubscriptbleInternalImpl = user_subscrible_component::InternalImpl<ContractState>;
 
     component!(path: src5_component, storage: src5, event: SRC5Event);
 
@@ -39,7 +49,9 @@ mod Account {
     struct Storage {
         Account_public_key: felt252,
         #[substorage(v0)]
-        src5: src5_component::Storage
+        src5: src5_component::Storage,
+        #[substorage(v0)]
+        ap_s: user_subscrible_component::Storage,
     }
 
     #[event]
@@ -47,7 +59,8 @@ mod Account {
     enum Event {
         OwnerAdded: OwnerAdded,
         OwnerRemoved: OwnerRemoved,
-        SRC5Event: src5_component::Event
+        SRC5Event: src5_component::Event,
+        ap_e: user_subscrible_component::Event,
     }
 
     #[derive(Drop, starknet::Event)]
