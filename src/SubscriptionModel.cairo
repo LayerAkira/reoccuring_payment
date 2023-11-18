@@ -274,14 +274,19 @@ mod service_subscribe_component {
     struct Storage {
         name: felt252,
         sub_id_to_sub_info: LegacyMap::<u256, Subscription>,
-        user_sub_to_last_payment: LegacyMap::<(ContractAddress, u256), u256>,
-        fee_recipient: ContractAddress
+        user_sub_to_last_payment_time: LegacyMap::<(ContractAddress, u256), u256>,
+        fee_recipient: ContractAddress,
+        bips_reward: u256,
+        collected_fee: (ContractAddress, u256),
+        pay_for_subscription_lock: bool,
+        collect_lock: bool
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        ServiceSubscription: ServiceSubscription
+        ServiceSubscription: ServiceSubscription,
+        InvokerReward: InvokerReward
     }
 
     #[derive(Drop, starknet::Event)]
@@ -291,6 +296,16 @@ mod service_subscribe_component {
         #[key]
         sub_id: u256,
         actual_amount: u256
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct InvokerReward {
+        #[key]
+        sub_user: ContractAddress,
+        #[key]
+        sub_id: u256,
+        amount: u256,
+        recipient: ContractAddress
     }
 
 
@@ -308,12 +323,42 @@ mod service_subscribe_component {
         }
 
         fn pay_for_subscription(ref self: ComponentState<TContractState>, sub_id: u256) -> bool {
+            assert(!self.pay_for_subscription_lock.read(), 'pay_for_subscription lock');
+            self.pay_for_subscription_lock.write(true);
+            let caller = get_caller_address();
+
+            let (token, collected_fee): (ContractAddress, u256) = self.collected_fee.read();
+            //  if somebody try to do scam stuff we just tfer reward fee to our fee recipient
+            if collected_fee > 0 {
+                ERC20ABIDispatcher { contract_address: token }
+                    .transfer(self.fee_recipient.read(), collected_fee);
+                self
+                    .emit(
+                        InvokerReward {
+                            sub_user: caller,
+                            sub_id: sub_id,
+                            amount: collected_fee,
+                            recipient: self.fee_recipient.read()
+                        }
+                    );
+            }
             let sub_info = self.get_subscription_info(sub_id);
             let erc20 = ERC20ABIDispatcher { contract_address: sub_info.payment_token };
-            let caller = get_caller_address();
-            erc20.transfer_from(caller, self.fee_recipient.read(), sub_info.payment_amount);
+
+            let bips_reward: u256 = sub_info.payment_amount * self.bips_reward.read() / 10000;
+            if bips_reward == 0 {
+                erc20.transfer_from(caller, self.fee_recipient.read(), sub_info.payment_amount);
+                self.collected_fee.write((token, 0));
+            } else {
+                erc20
+                    .transfer_from(
+                        caller, self.fee_recipient.read(), sub_info.payment_amount - bips_reward
+                    );
+                self.collected_fee.write((sub_info.payment_token, bips_reward));
+            }
+
             self
-                .user_sub_to_last_payment
+                .user_sub_to_last_payment_time
                 .write((caller, sub_id), get_block_info().unbox().block_timestamp.into());
             self
                 .emit(
@@ -323,18 +368,22 @@ mod service_subscribe_component {
                         actual_amount: sub_info.payment_amount
                     }
                 );
+
+            self.pay_for_subscription_lock.write(false);
             return true;
         }
         fn terminate_subscription(
             ref self: ComponentState<TContractState>, sub_id: u256
         ) { // no refund logic  sorry
+        // self.user_sub_to_last_payment.write(0);
         }
+
         fn is_subscribed(
             self: @ComponentState<TContractState>, user: ContractAddress, sub_id: u256
         ) -> bool {
             let sub_info = self.get_subscription_info(sub_id);
             let elapsed = get_block_info().unbox().block_timestamp.into()
-                - self.user_sub_to_last_payment.read((user, sub_id));
+                - self.user_sub_to_last_payment_time.read((user, sub_id));
             if elapsed == 0 || elapsed > sub_info.sub_period_in_seconds {
                 return false;
             }
@@ -344,11 +393,31 @@ mod service_subscribe_component {
         fn collect_sub(
             ref self: ComponentState<TContractState>, user: ContractAddress, sub_id: u256
         ) -> bool {
+            assert(!self.collect_lock.read(), 'collect_lock');
             let user_acc = IUserSubscriptionDispatcher { contract_address: user };
-            assert(get_contract_address() == get_caller_address(), 'Only self');
+            let caller = get_caller_address();
             user_acc.pay(get_contract_address(), sub_id);
+
+            let (token, collected_fee): (ContractAddress, u256) = self.collected_fee.read();
+            if collected_fee > 0 {
+                ERC20ABIDispatcher { contract_address: token }.transfer(caller, collected_fee);
+                self.collected_fee.write((token, 0));
+                self
+                    .emit(
+                        InvokerReward {
+                            sub_user: user,
+                            sub_id: sub_id,
+                            amount: collected_fee,
+                            recipient: caller
+                        }
+                    );
+            }
+
+            self.collect_lock.write(false);
             return true;
         }
     }
 }
+// voila we have kinda liquidation market lol
+
 
