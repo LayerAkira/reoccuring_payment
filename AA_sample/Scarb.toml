@@ -1,0 +1,13 @@
+[package]
+name = "aa_auto_transactions"
+version = "0.1.0"
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+casm-add-pythonic-hints = true
+allowed-libfuncs-list.name = "all"
+
+[dependencies]
+starknet = ">=2.0.0"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.8.0-beta.0" }
