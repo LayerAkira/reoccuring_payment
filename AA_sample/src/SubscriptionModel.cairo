@@ -206,17 +206,13 @@ mod user_subscrible_component {
             self: @ComponentState<TContractState>, sub_service: ContractAddress, sub_id: u256
         ) -> bool {
             let key = (sub_service, sub_id);
-            assert(self._contains(sub_service, sub_id) == true, 'contains fail');
             if self._contains(sub_service, sub_id) == false {
                 return false;
             }
-            assert(self.sub_service_to_max_calls.read(key) != 0, 'max_calls fail');
             if self.sub_service_to_max_calls.read(key) == 0 {
                 return false;
             }
             let sub_info = self.sub_service_to_sub_info.read(key);
-            assert(get_block_info().unbox().block_timestamp.into()
-                - self.sub_service_to_last_called.read(key) >= sub_info.sub_period_in_seconds, 'time_stamp fail');
             if get_block_info().unbox().block_timestamp.into()
                 - self.sub_service_to_last_called.read(key) < sub_info.sub_period_in_seconds {
                 return false;

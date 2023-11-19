@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    // #[ignore]
     //#[available_gas(10000000000)]
     #[fork("latest")]
     fn test_01() {
@@ -137,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
+    // #[ignore]
     //#[available_gas(10000000000)]
     #[should_panic(expected: ('Fail validate pay',))]
     #[fork("latest")]
@@ -191,7 +191,7 @@ mod tests {
     #[test]
     //#[available_gas(10000000000)]
     #[fork("latest")]
-    #[ignore]
+    // #[ignore]
     fn test_03() {
         let amount = 1000000000000000000;
         assert(1 == 1, 'LOL');
@@ -242,7 +242,7 @@ mod tests {
     #[test]
     //#[available_gas(10000000000)]
     #[fork("latest")]
-    #[ignore]
+    // #[ignore]
     fn test_04() {
         let amount = 1000000000000000000;
         assert(1 == 1, 'LOL');
@@ -288,9 +288,9 @@ mod tests {
         assert(prev_b - get_balance(acc_address) == 1, 'failed_test_04');
     }
 
-        #[test]
+    #[test]
     //#[available_gas(10000000000)]
-    #[should_panic(expected: ('max_calls fail',))]
+    #[should_panic(expected: ('Fail validate pay',))]
     #[fork("latest")]
     fn test_05() {
         let amount = 1000000000000000000;
