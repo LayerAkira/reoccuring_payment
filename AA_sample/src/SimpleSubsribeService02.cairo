@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod SimpleSubsribeServiceContract02 {
-    use aa_auto_transactions::SubscriptionModel::Subscription;
+    use aa_auto_transactions::interfaces::Subscription;
     use core::traits::Into;
     use core::array::ArrayTrait;
     use core::option::OptionTrait;
@@ -18,13 +18,12 @@ mod SimpleSubsribeServiceContract02 {
     use core::dict::{Felt252Dict, Felt252DictTrait, SquashedFelt252Dict};
     use aa_auto_transactions::utils::erc20::IERC20Dispatcher;
     use aa_auto_transactions::utils::erc20::IERC20DispatcherTrait;
-    use aa_auto_transactions::SubscriptionModel::service_subscribe_component;
+    use aa_auto_transactions::service_subscribe_component::service_subscribe_component;
 
     component!(path: service_subscribe_component, storage: ssc_s, event: ssc_e);
 
     #[abi(embed_v0)]
-    impl UserSubscriptbleImpl =
-        service_subscribe_component::ServiceSubscriptble<ContractState>;
+    impl UserSubscriptbleImpl = service_subscribe_component::ServiceSubscriptble<ContractState>;
 
     #[storage]
     struct Storage {

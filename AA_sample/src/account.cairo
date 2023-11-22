@@ -23,7 +23,7 @@ mod Account {
     use starknet::get_contract_address;
     use starknet::get_tx_info;
 
-    use aa_auto_transactions::SubscriptionModel::user_subscrible_component;
+    use aa_auto_transactions::user_subscribe_component::user_subscrible_component;
 
     const TRANSACTION_VERSION: felt252 = 1;
     // 2**128 + TRANSACTION_VERSION

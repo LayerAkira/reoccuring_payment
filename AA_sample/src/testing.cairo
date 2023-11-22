@@ -1,35 +1,13 @@
-use serde::Serde;
-use starknet::ContractAddress;
-use starknet::contract_address_to_felt252;
-use array::ArrayTrait;
-use debug::PrintTrait;
-
-
 #[cfg(test)]
 mod tests {
-    use core::traits::Into;
-    use core::array::ArrayTrait;
-    use core::option::OptionTrait;
-    use core::traits::TryInto;
-    use core::result::ResultTrait;
-    use snforge_std::declare;
-    use starknet::ContractAddress;
-    use snforge_std::ContractClassTrait;
-    use starknet::info::get_block_number;
+    use core::{traits::Into,array::ArrayTrait,option::OptionTrait,traits::TryInto,result::ResultTrait};
+    use starknet::{ContractAddress,info::get_block_number,get_caller_address};
     use debug::PrintTrait;
-    use starknet::get_caller_address;
-    use snforge_std::start_prank;
-    use snforge_std::start_warp;
-    use snforge_std::stop_warp;
-    use snforge_std::stop_prank;
+    use snforge_std::{start_prank,start_warp,stop_warp,stop_prank,declare,ContractClassTrait};
     use core::dict::{Felt252Dict, Felt252DictTrait, SquashedFelt252Dict};
-    use aa_auto_transactions::SubscriptionModel::Subscription;
-    use aa_auto_transactions::SubscriptionModel::IServiceSubscriptionDispatcher;
-    use aa_auto_transactions::SubscriptionModel::IServiceSubscriptionDispatcherTrait;
-    use aa_auto_transactions::utils::erc20::IERC20Dispatcher;
-    use aa_auto_transactions::utils::erc20::IERC20DispatcherTrait;
-    use aa_auto_transactions::utils::account::AccountABIDispatcher;
-    use aa_auto_transactions::utils::account::AccountABIDispatcherTrait;
+    use aa_auto_transactions::interfaces::{Subscription, IServiceSubscriptionDispatcher, IServiceSubscriptionDispatcherTrait};
+    use aa_auto_transactions::utils::erc20::{IERC20Dispatcher,IERC20DispatcherTrait};
+    use aa_auto_transactions::utils::account::{AccountABIDispatcher,AccountABIDispatcherTrait};
 
     fn print_u(res: u256) {
         let a: felt252 = res.try_into().unwrap();

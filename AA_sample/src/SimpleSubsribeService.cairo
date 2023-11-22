@@ -1,6 +1,6 @@
 #[starknet::contract]
 mod SimpleSubsribeServiceContract {
-    use aa_auto_transactions::SubscriptionModel::Subscription;
+    use aa_auto_transactions::interfaces::Subscription;
     use core::traits::Into;
     use core::array::ArrayTrait;
     use core::option::OptionTrait;
@@ -13,11 +13,9 @@ mod SimpleSubsribeServiceContract {
     use starknet::info::get_contract_address;
     use debug::PrintTrait;
     use starknet::get_caller_address;
-    use snforge_std::start_prank;
-    use snforge_std::stop_prank;
+    use snforge_std::{start_prank,stop_prank};
     use core::dict::{Felt252Dict, Felt252DictTrait, SquashedFelt252Dict};
-    use aa_auto_transactions::utils::erc20::IERC20Dispatcher;
-    use aa_auto_transactions::utils::erc20::IERC20DispatcherTrait;
+    use aa_auto_transactions::utils::erc20::{IERC20Dispatcher,IERC20DispatcherTrait};
 
     #[storage]
     struct Storage {

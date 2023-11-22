@@ -2,7 +2,7 @@ use array::ArrayTrait;
 use array::SpanTrait;
 use starknet::ContractAddress;
 use starknet::account::Call;
-use aa_auto_transactions::SubscriptionModel::Subscription;
+use aa_auto_transactions::interfaces::Subscription;
 
 #[starknet::interface]
 trait AccountABI<TState> {
